@@ -1,1 +1,3 @@
-Este es el archivo con el bug inicial.
+Este es el archivo con el bug inicial. echo
+La linea con el fix (Bug Solucionado)
+Linea adicional para el parche
