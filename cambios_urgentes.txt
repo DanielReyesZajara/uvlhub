@@ -1,0 +1,1 @@
+Este es el archivo con el bug inicial.
