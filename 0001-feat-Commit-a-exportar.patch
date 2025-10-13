@@ -1,0 +1,20 @@
+From 198343d257fbd718321af23c5dd3a5f8ca1610a8 Mon Sep 17 00:00:00 2001
+From: Daniel Reyes Zajara <danreyzaj@alum.us.es>
+Date: Mon, 13 Oct 2025 18:15:10 +0200
+Subject: [PATCH] feat: Commit a exportar
+
+---
+ archivo_nuevo.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 archivo_nuevo.txt
+
+diff --git a/archivo_nuevo.txt b/archivo_nuevo.txt
+new file mode 100644
+index 0000000..41cd3f1
+--- /dev/null
++++ b/archivo_nuevo.txt
+@@ -0,0 +1 @@
++Este es un nuevo commit
+-- 
+2.43.0
+

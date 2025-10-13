@@ -1,0 +1,9 @@
+diff --git a/cambios_urgentes.txt b/cambios_urgentes.txt
+index 5853ce1..a843c05 100644
+--- a/cambios_urgentes.txt
++++ b/cambios_urgentes.txt
+@@ -1 +1,3 @@
+-Este es el archivo con el bug inicial.
++Este es el archivo con el bug inicial. echo
++La linea con el fix (Bug Solucionado)
++Linea adicional para el parche
