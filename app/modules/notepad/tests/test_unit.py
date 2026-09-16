@@ -1,5 +1,7 @@
 import pytest
 
+from app.modules.notepad.forms import NotepadForm
+
 
 @pytest.fixture(scope='module')
 def test_client(test_client):
@@ -22,3 +24,11 @@ def test_sample_assertion(test_client):
     """
     greeting = "Hello, World!"
     assert greeting == "Hello, World!", "The greeting does not coincide with 'Hello, World!'"
+
+def test_title_removes_sspaces(test_client):
+    with test_client.application.test_request_context():
+        form = NotepadForm(title="  Mi nota ")
+
+        assert  form.title.data == "Mi nota"
+
+
