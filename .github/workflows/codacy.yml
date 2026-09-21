@@ -1,5 +1,6 @@
 name: Codacy CI
 
+# Se ejecuta al subir cambios a main o abrir una PR hacia main.
 on:
   push:
     branches:
@@ -11,10 +12,13 @@ on:
 jobs:
   codacy:
     runs-on: ubuntu-24.04
-    strategy: 
-        fail-fast: false
-        matrix:
-            python-version: ['3.13','3.14']
+    # Ejecuta los mismos pasos una vez por cada versión de Python.
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.13', '3.14']
+
+    # Base de datos temporal para las pruebas.
     services:
       mariadb:
         image: mariadb:12.0.2
@@ -25,6 +29,7 @@ jobs:
           MARIADB_PASSWORD: uvlhub_password
         ports:
           - 3306:3306
+        # Espera a que MariaDB esté lista antes de ejecutar los pasos.
         options: >-
           --health-cmd="mariadb-admin ping -u root -p$MARIADB_ROOT_PASSWORD"
           --health-interval=10s
@@ -32,41 +37,49 @@ jobs:
           --health-retries=3
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
+      - name: Descargar el código
+        uses: actions/checkout@v5
 
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Preparar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e ./rosemary
-    
-    - name: Check outdated dependecies
-      run : python -m pip list --outdated
+      - name: Instalar y comprobar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -e ./rosemary
+          python -m pip check
 
-    - name: Run tests with coverage
-      run: |
-        coverage run -m pytest app/features/ --ignore-glob='*selenium*'
-        coverage xml
-      env:
-        FLASK_ENV: testing
-        MARIADB_HOSTNAME: 127.0.0.1
-        MARIADB_PORT: 3306
-        MARIADB_TEST_DATABASE: uvlhubdb_test
-        MARIADB_USER: uvlhub_user
-        MARIADB_PASSWORD: uvlhub_password
+      - name: Consultar paquetes desactualizados
+        run: python -m pip list --outdated
 
-    - name: Upload coverage to Codacy
-      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
-      env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.PRACTICAS_CODACY_TOKEN }}
-    
-    - name: Audit installed dependecies
-      run: |
-        python -m pip install pip-audit
-        python -m pip_audit --skip-editable
+      - name: Ejecutar pruebas y generar cobertura
+        run: |
+          python -m coverage run --source=app -m pytest app/features/ tests/ --ignore-glob='*selenium*'
+          python -m coverage xml
+        env:
+          FLASK_ENV: testing
+          MARIADB_HOSTNAME: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_TEST_DATABASE: uvlhubdb_test
+          MARIADB_USER: uvlhub_user
+          MARIADB_PASSWORD: uvlhub_password
+
+      - name: Enviar cobertura a Codacy
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.PRACTICAS_CODACY_TOKEN }}
+
+      - name: Buscar vulnerabilidades en las dependencias
+        # El script conserva el aislamiento del auditor y las excepciones autorizadas.
+        run: bash scripts/audit-dependencies.sh
+
+      - name: Guardar el informe de seguridad
+        # Guarda el informe aunque la auditoría haya encontrado vulnerabilidades.
+        if: ${{ !cancelled() && hashFiles('pip-audit.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-python-${{ matrix.python-version }}
+          path: pip-audit.json
